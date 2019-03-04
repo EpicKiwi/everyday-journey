@@ -31,7 +31,6 @@ public class TrackingService extends Service {
 
     protected FusedLocationProviderClient locationClient;
     protected LocationCallback locationCallback;
-    protected ArrayList<LocationChangedCallback> locationChangedCallback = new ArrayList<>();
     protected Location currentLocation;
     protected HistoryService historyService;
     protected ArrayList<HistoryValue> pendingValues = new ArrayList<>();
@@ -52,22 +51,6 @@ public class TrackingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return Service.START_STICKY;
-    }
-
-    /**
-     * Register a callback to call when position changed
-     * @param callback Callback called when position changed
-     */
-    public void registerCallback(LocationChangedCallback callback){
-        locationChangedCallback.add(callback);
-    }
-
-    /**
-     * Remove a previously registered callback
-     * @param callback Previously registered callback
-     */
-    public void removeCallback(LocationChangedCallback callback){
-        locationChangedCallback.remove(callback);
     }
 
     ///////////////////////
@@ -128,7 +111,10 @@ public class TrackingService extends Service {
 
     @Override
     public void onDestroy() {
-        this.locationClient.removeLocationUpdates(this.locationCallback);
+        if(this.locationCallback != null) {
+            this.locationClient.removeLocationUpdates(this.locationCallback);
+        }
+        unbindService(this.historyServiceConnexion);
     }
 
     /**
@@ -147,11 +133,6 @@ public class TrackingService extends Service {
         } else {
             this.writeValue(val);
         }
-
-        for(LocationChangedCallback callback : this.locationChangedCallback){
-            callback.onChanged(location);
-        }
-
     }
 
     protected void writeValue(HistoryValue val){

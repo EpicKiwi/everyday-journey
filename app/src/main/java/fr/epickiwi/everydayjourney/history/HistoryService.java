@@ -7,11 +7,15 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
 import android.text.format.DateFormat;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class HistoryService extends Service {
@@ -48,7 +52,7 @@ public class HistoryService extends Service {
     }
 
     protected String valueToFileData(HistoryValue val){
-        Location loc = val.location;
+        Location loc = val.getLocation();
         return   loc.getTime()+","
                 +loc.getAccuracy()+","
                 +loc.getLatitude()+","
@@ -61,10 +65,34 @@ public class HistoryService extends Service {
     ///////////////////////
 
     public void appendValue(HistoryValue value) throws IOException {
-        File saveFile = this.getValueFile(value.location.getTime());
+        File saveFile = this.getValueFile(value.getLocation().getTime());
         saveFile.createNewFile();
         FileWriter outputStream = new FileWriter(saveFile,true);
         outputStream.write(this.valueToFileData(value));
         outputStream.close();
+    }
+
+    public HistoryValue[] getValuesForDay(Date date) throws IOException {
+        File saveFile = this.getValueFile(date.getTime());
+
+        if(!saveFile.exists()){
+            return new HistoryValue[0];
+        }
+
+        BufferedReader inputStream = null;
+
+        try {
+            inputStream = new BufferedReader(new FileReader(saveFile));
+        } catch (FileNotFoundException e) {
+            return new HistoryValue[0];
+        }
+
+        ArrayList<HistoryValue> values = new ArrayList<>();
+        String line = null;
+        while((line = inputStream.readLine()) != null){
+            values.add(HistoryValue.fromFileData(line));
+        }
+
+        return values.toArray(new HistoryValue[0]);
     }
 }

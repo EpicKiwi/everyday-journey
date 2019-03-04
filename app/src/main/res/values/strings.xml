@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Everyday Journey</string>
+    <string name="mapboxToken">pk.eyJ1IjoiZXBpY2tpd2kiLCJhIjoiY2pyMHIwZTN3MHMwejQzczcyNnpwOW02MiJ9._ESs33013rot4WcZw61Jcg</string>
+    <string name="userLocationPermissionPxplanation">Le tracking utilise votre position GPS</string>
 </resources>
