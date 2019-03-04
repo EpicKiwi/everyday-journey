@@ -49,6 +49,11 @@ public class TrackingService extends Service {
         this.startTracking();
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return Service.START_STICKY;
+    }
+
     /**
      * Register a callback to call when position changed
      * @param callback Callback called when position changed
@@ -91,8 +96,8 @@ public class TrackingService extends Service {
         this.locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         LocationRequest request = new LocationRequest();
-        request.setInterval(10000);
-        request.setPriority(LocationRequest.PRIORITY_NO_POWER);
+        request.setInterval(120000);
+        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.e("TrackingService","No permission for fine location");
