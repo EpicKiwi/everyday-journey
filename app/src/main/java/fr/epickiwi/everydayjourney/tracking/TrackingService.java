@@ -79,7 +79,7 @@ public class TrackingService extends Service {
         this.locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         LocationRequest request = new LocationRequest();
-        request.setInterval(120000);
+        request.setInterval(900000);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
