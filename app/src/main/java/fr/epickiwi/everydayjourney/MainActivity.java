@@ -15,11 +15,14 @@ import android.widget.Toast;
 
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.geojson.BoundingBox;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.utils.PolylineUtils;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -142,12 +145,17 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     protected void showPath(HistoryValue[] values){
         if(this.displayedDataSource != null) {
             ArrayList<Point> points = new ArrayList<>();
+            LatLngBounds.Builder bounds = new LatLngBounds.Builder();
             for(HistoryValue val : values){
-                points.add(Point.fromLngLat(val.getLocation().getLongitude(),val.getLocation().getLatitude()));
+                double lat = val.getLocation().getLatitude();
+                double lon = val.getLocation().getLongitude();
+                points.add(Point.fromLngLat(lon,lat));
+                bounds.include(new LatLng(lat,lon));
             }
-            points = (ArrayList<Point>) PolylineUtils.simplify(points);
+            points = (ArrayList<Point>) PolylineUtils.simplify(points,0.01);
             LineString pathLine = LineString.fromLngLats(points);
             this.displayedDataSource.setGeoJson(pathLine);
+            this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
         } else {
             this.pendingData = values;
         }
