@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
                 points.add(Point.fromLngLat(lon,lat));
                 bounds.include(new LatLng(lat,lon));
             }
-            points = (ArrayList<Point>) PolylineUtils.simplify(points,0.01);
+            points = (ArrayList<Point>) PolylineUtils.simplify(points,0.0005);
             LineString pathLine = LineString.fromLngLats(points);
             this.displayedDataSource.setGeoJson(pathLine);
             this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
