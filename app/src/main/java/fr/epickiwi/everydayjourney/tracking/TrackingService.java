@@ -28,6 +28,7 @@ import java.util.ArrayList;
 
 import fr.epickiwi.everydayjourney.AppNotificationManager;
 import fr.epickiwi.everydayjourney.R;
+import fr.epickiwi.everydayjourney.SettingsStorage;
 import fr.epickiwi.everydayjourney.history.HistoryBinder;
 import fr.epickiwi.everydayjourney.history.HistoryService;
 import fr.epickiwi.everydayjourney.history.HistoryValue;
@@ -41,6 +42,7 @@ public class TrackingService extends Service {
     protected Location currentLocation;
     protected HistoryService historyService;
     protected ArrayList<HistoryValue> pendingValues = new ArrayList<>();
+    private SettingsStorage settings;
 
     @Nullable
     @Override
@@ -52,6 +54,7 @@ public class TrackingService extends Service {
     public void onCreate() {
         Log.d("TrackingService","Starting tracking service");
         bindService(new Intent(this, HistoryService.class), this.historyServiceConnexion, Context.BIND_AUTO_CREATE);
+        this.settings = new SettingsStorage(this);
         this.startTracking();
     }
 
@@ -96,7 +99,7 @@ public class TrackingService extends Service {
         this.locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         LocationRequest request = new LocationRequest();
-        request.setInterval(60000);
+        request.setInterval(this.settings.getTrackFrequency());
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -104,6 +107,7 @@ public class TrackingService extends Service {
             this.stopSelf();
             return;
         }
+        Log.d("TrackingService","Start tracking every "+this.settings.getTrackFrequency()+" ms");
 
         this.locationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
