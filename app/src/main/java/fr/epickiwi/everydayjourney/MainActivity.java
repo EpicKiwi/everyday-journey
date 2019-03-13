@@ -30,6 +30,7 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
@@ -156,10 +157,12 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
                 bounds.include(new LatLng(lat,lon));
             }
             if(values.length > 0) {
-                points = (ArrayList<Point>) PolylineUtils.simplify(points, 0.01);
+                points = (ArrayList<Point>) PolylineUtils.simplify(points, 0.0007);
                 LineString pathLine = LineString.fromLngLats(points);
                 this.displayedDataSource.setGeoJson(pathLine);
                 this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
+            } else {
+                this.displayedDataSource.setGeoJson("");
             }
         } else {
             this.pendingData = values;
@@ -176,7 +179,8 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         dataLayer.setProperties(
                 PropertyFactory.lineColor(ContextCompat.getColor(this,R.color.colorPrimary)),
                 PropertyFactory.lineWidth(10.0f),
-                PropertyFactory.lineCap("round")
+                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
         );
         loadedStyle.addLayer(dataLayer);
 
