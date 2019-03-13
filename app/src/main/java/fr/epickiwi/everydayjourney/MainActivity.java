@@ -65,6 +65,9 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        AppNotificationManager.createTrackingChannel(this);
+
         Mapbox.getInstance(this, getString(R.string.mapboxToken));
         setContentView(R.layout.activity_main);
         startService(new Intent(this,TrackingService.class));
@@ -152,10 +155,12 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
                 points.add(Point.fromLngLat(lon,lat));
                 bounds.include(new LatLng(lat,lon));
             }
-            points = (ArrayList<Point>) PolylineUtils.simplify(points,0.01);
-            LineString pathLine = LineString.fromLngLats(points);
-            this.displayedDataSource.setGeoJson(pathLine);
-            this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
+            if(values.length > 0) {
+                points = (ArrayList<Point>) PolylineUtils.simplify(points, 0.01);
+                LineString pathLine = LineString.fromLngLats(points);
+                this.displayedDataSource.setGeoJson(pathLine);
+                this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
+            }
         } else {
             this.pendingData = values;
         }

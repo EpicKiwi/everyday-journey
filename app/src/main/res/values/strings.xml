@@ -2,4 +2,9 @@
     <string name="app_name">Everyday Journey</string>
     <string name="mapboxToken">pk.eyJ1IjoiZXBpY2tpd2kiLCJhIjoiY2pyMHIwZTN3MHMwejQzczcyNnpwOW02MiJ9._ESs33013rot4WcZw61Jcg</string>
     <string name="userLocationPermissionPxplanation">Le tracking utilise votre position GPS</string>
+
+    <string name="trackingNotificationTitle">Tracking en cours</string>
+    <string name="trackingNotificationText">Everyday Journey suis vos déplacements</string>
+    <string name="trackingNotificationChannelTitle">État du tracking</string>
+    <string name="trackingNotificationChannelDescription">Toutes les notifications décrivant l\'état du tracking</string>
 </resources>
