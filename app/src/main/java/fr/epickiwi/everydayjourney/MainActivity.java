@@ -10,7 +10,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mapbox.android.core.permissions.PermissionsListener;
@@ -35,6 +38,7 @@ import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     protected MapView mapView;
     protected MapboxMap map;
     protected GeoJsonSource displayedDataSource;
+    protected TextView dateView;
+    private TextView lengthView;
 
     private HistoryService historyService;
     protected ServiceConnection historyServiceConnection = new ServiceConnection() {
@@ -73,6 +79,9 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         setContentView(R.layout.activity_main);
         startService(new Intent(this,TrackingService.class));
         bindService(new Intent(this,HistoryService.class),this.historyServiceConnection, Context.BIND_AUTO_CREATE);
+
+        this.dateView = findViewById(R.id.dateView);
+        this.lengthView = findViewById(R.id.lengthView);
 
         this.mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -136,9 +145,14 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     /////////////////////////
 
     protected void showPathForDay(Date date){
+
+        this.dateView.setText(DateUtils.formatDateTime(this,date.getTime(),DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+
         if(this.historyService != null){
             try {
-                this.showPath(this.historyService.getValuesForDay(date));
+                HistoryValue[] valuesForDay = this.historyService.getValuesForDay(date);
+                this.showPath(valuesForDay);
+                this.lengthView.setText(((double)Math.round(GeoTools.getDistance(valuesForDay)/10)/100)+" Km");
             } catch (IOException e) {
                 Log.e("MainActivity","Error during data read : "+e.getMessage());
                 e.printStackTrace();

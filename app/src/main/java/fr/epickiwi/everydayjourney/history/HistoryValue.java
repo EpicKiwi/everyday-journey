@@ -2,6 +2,8 @@ package fr.epickiwi.everydayjourney.history;
 
 import android.location.Location;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
+
 public class HistoryValue {
     private Location location;
 
@@ -13,6 +15,10 @@ public class HistoryValue {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public LatLng getLatLng(){
+        return new LatLng(this.location.getLatitude(),this.location.getLongitude(),this.location.getAltitude());
     }
 
     ///////////////////////
