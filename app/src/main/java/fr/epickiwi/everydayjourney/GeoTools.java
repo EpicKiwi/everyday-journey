@@ -6,7 +6,7 @@ import fr.epickiwi.everydayjourney.history.HistoryValue;
 
 public class GeoTools {
 
-    static double getDistance(LatLng from, LatLng to){
+    static public double getDistance(LatLng from, LatLng to){
         double earthRadius = 6371000;
 
         double deltaLat = Math.toRadians(to.getLatitude() - from.getLatitude());
@@ -22,7 +22,7 @@ public class GeoTools {
         return earthRadius * c;
     }
 
-    static double getDistance(HistoryValue[] values){
+    static public double getDistance(HistoryValue[] values){
         if(values.length < 2){
             return 0;
         }
