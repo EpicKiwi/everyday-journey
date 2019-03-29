@@ -18,7 +18,7 @@ public class SettingsStorage {
     /////////////////////
 
     public int getTrackFrequency(){
-        return this.props.getInt(SETTING_TRACK_FREQUENCY,600000);
+        return this.props.getInt(SETTING_TRACK_FREQUENCY,300000);
     }
 
     /////////////////////
