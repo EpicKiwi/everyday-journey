@@ -4,18 +4,22 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Color;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.LongSparseArray;
+import android.view.View;
 import android.widget.Toast;
 
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
-import com.mapbox.geojson.BoundingBox;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.utils.PolylineUtils;
@@ -30,14 +34,19 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
+import fr.epickiwi.everydayjourney.fragments.PathInfoFragment;
 import fr.epickiwi.everydayjourney.history.HistoryBinder;
 import fr.epickiwi.everydayjourney.history.HistoryService;
 import fr.epickiwi.everydayjourney.history.HistoryValue;
@@ -45,17 +54,24 @@ import fr.epickiwi.everydayjourney.tracking.TrackingService;
 
 public class MainActivity extends AppCompatActivity implements PermissionsListener {
 
-    protected HistoryValue[] pendingData;
     protected MapView mapView;
     protected MapboxMap map;
     protected GeoJsonSource displayedDataSource;
+
+    private PathInfoPageAdapter pathInfoAdapter;
+
+    protected boolean mapLoaded = false;
+    protected boolean serviceLoaded = false;
+
+    protected LongSparseArray<HistoryValue[]> loadedValues = new LongSparseArray<>();
 
     private HistoryService historyService;
     protected ServiceConnection historyServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             MainActivity.this.historyService = ((HistoryBinder) iBinder).getService();
-            MainActivity.this.showPathForDay(new Date());
+            MainActivity.this.serviceLoaded = true;
+            MainActivity.this.initializePath();
         }
 
         @Override
@@ -65,12 +81,30 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        AppNotificationManager.createTrackingChannel(this);
+
         Mapbox.getInstance(this, getString(R.string.mapboxToken));
         setContentView(R.layout.activity_main);
         startService(new Intent(this,TrackingService.class));
         bindService(new Intent(this,HistoryService.class),this.historyServiceConnection, Context.BIND_AUTO_CREATE);
 
         this.mapView = findViewById(R.id.mapView);
+
+        this.pathInfoAdapter = new PathInfoPageAdapter(getSupportFragmentManager());
+        ViewPager pager = findViewById(R.id.pathInfoPager);
+        pager.setAdapter(pathInfoAdapter);
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+            @Override
+            public void onPageSelected(int position) {
+                MainActivity.this.onPageChanged(position);
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
@@ -133,12 +167,8 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
 
     protected void showPathForDay(Date date){
         if(this.historyService != null){
-            try {
-                this.showPath(this.historyService.getValuesForDay(date));
-            } catch (IOException e) {
-                Log.e("MainActivity","Error during data read : "+e.getMessage());
-                e.printStackTrace();
-            }
+                HistoryValue[] valuesForDay = this.loadHistoricalData(date);
+                this.showPath(valuesForDay);
         }
     }
 
@@ -152,13 +182,64 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
                 points.add(Point.fromLngLat(lon,lat));
                 bounds.include(new LatLng(lat,lon));
             }
-            points = (ArrayList<Point>) PolylineUtils.simplify(points,0.0005);
-            LineString pathLine = LineString.fromLngLats(points);
-            this.displayedDataSource.setGeoJson(pathLine);
-            this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
-        } else {
-            this.pendingData = values;
+            if(values.length > 0) {
+                points = (ArrayList<Point>) PolylineUtils.simplify(points, 0.0007);
+                LineString pathLine = LineString.fromLngLats(points);
+                this.displayedDataSource.setGeoJson(pathLine);
+                if(values.length > 1) {
+                    this.map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 200));
+                } else {
+                    this.map.easeCamera(CameraUpdateFactory.newLatLng(values[0].getLatLng()));
+                }
+            } else {
+                this.displayedDataSource.setGeoJson("");
+            }
         }
+    }
+
+    protected void initializePath(){
+        if(!this.mapLoaded || !this.serviceLoaded) return;
+        this.loadMoreData(new Date());
+        this.showPathForDay(new Date());
+    }
+
+    protected void loadMoreData(Date fromDate){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(fromDate);
+
+        this.loadHistoricalData(cal.getTime());
+        cal.add(Calendar.DATE,-1);
+        this.loadHistoricalData(cal.getTime());
+
+        cal.add(Calendar.DATE,2);
+        if(cal.getTime().before(new Date())) {
+            this.loadHistoricalData(cal.getTime());
+        }
+    }
+
+    protected HistoryValue[] loadHistoricalData(Date date){
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY,0);
+        cal.set(Calendar.MINUTE,0);
+        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.MILLISECOND,0);
+        date = cal.getTime();
+
+        if(this.loadedValues.indexOfKey(date.getTime()) < 0){
+            try {
+                Log.d("DEBUG","Loading for date "+date.toString());
+                this.loadedValues.put(date.getTime(),this.historyService.getValuesForDay(date));
+                this.pathInfoAdapter.notifyDataSetChanged();
+            } catch (IOException e) {
+                Log.e("MainActivity", "Error during data read : " + e.getMessage());
+                e.printStackTrace();
+                return new HistoryValue[0];
+            }
+        }
+
+        return this.loadedValues.get(date.getTime());
     }
 
     protected void onMapLoaded(Style loadedStyle){
@@ -171,14 +252,19 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         dataLayer.setProperties(
                 PropertyFactory.lineColor(ContextCompat.getColor(this,R.color.colorPrimary)),
                 PropertyFactory.lineWidth(10.0f),
-                PropertyFactory.lineCap("round")
+                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
         );
         loadedStyle.addLayer(dataLayer);
 
-        if(this.pendingData != null){
-            this.showPath(this.pendingData);
-            this.pendingData = null;
-        }
+        this.mapLoaded = true;
+        this.initializePath();
+    }
+
+    protected void onPageChanged(int position){
+        Date date = this.pathInfoAdapter.getDateForPos(position);
+        this.showPathForDay(date);
+        this.loadMoreData(date);
     }
 
     /////////////////////////
@@ -222,6 +308,39 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         } else {
             Toast.makeText(this, R.string.userLocationPermissionPxplanation, Toast.LENGTH_LONG).show();
             finish();
+        }
+    }
+
+    ///////////////////
+
+    public class PathInfoPageAdapter extends FragmentStatePagerAdapter {
+
+        private long DAY_IN_MILLI = 86400000;
+
+        public PathInfoPageAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public Date getDateForPos(int position){
+            return new Date((new Date()).getTime() - DAY_IN_MILLI*position);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Date date = this.getDateForPos(position);
+
+            PathInfoFragment frag = new PathInfoFragment();
+            frag.setDate(date);
+
+            HistoryValue[] values = MainActivity.this.loadHistoricalData(date);
+            frag.setValues(values);
+
+            return frag;
+        }
+
+        @Override
+        public int getCount() {
+            return MainActivity.this.loadedValues.size();
         }
     }
 }
