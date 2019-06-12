@@ -12,14 +12,14 @@ import java.util.Date;
 
 import fr.epickiwi.everydayjourney.GeoTools;
 import fr.epickiwi.everydayjourney.R;
-import fr.epickiwi.everydayjourney.history.HistoryValue;
+import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 
 public class PathInfoFragment extends Fragment {
 
     static public String DATE_PARAM;
 
     protected Date date;
-    protected HistoryValue[] values = new HistoryValue[0];
+    protected HistoryGeoValue[] values = new HistoryGeoValue[0];
 
     protected TextView dateTextView;
     protected TextView lengthTextView;
@@ -62,11 +62,11 @@ public class PathInfoFragment extends Fragment {
         this.update();
     }
 
-    public HistoryValue[] getValues() {
+    public HistoryGeoValue[] getValues() {
         return values;
     }
 
-    public void setValues(HistoryValue[] values) {
+    public void setValues(HistoryGeoValue[] values) {
         this.values = values;
         this.update();
     }

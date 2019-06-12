@@ -2,7 +2,7 @@ package fr.epickiwi.everydayjourney;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
-import fr.epickiwi.everydayjourney.history.HistoryValue;
+import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 
 public class GeoTools {
 
@@ -22,7 +22,7 @@ public class GeoTools {
         return earthRadius * c;
     }
 
-    static public double getDistance(HistoryValue[] values){
+    static public double getDistance(HistoryGeoValue[] values){
         if(values.length < 2){
             return 0;
         }

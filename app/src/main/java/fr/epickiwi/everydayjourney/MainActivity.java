@@ -15,7 +15,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.view.View;
 import android.widget.Toast;
 
 import com.mapbox.android.core.permissions.PermissionsListener;
@@ -38,18 +37,15 @@ import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import fr.epickiwi.everydayjourney.fragments.PathInfoFragment;
 import fr.epickiwi.everydayjourney.history.HistoryBinder;
 import fr.epickiwi.everydayjourney.history.HistoryService;
-import fr.epickiwi.everydayjourney.history.HistoryValue;
+import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 import fr.epickiwi.everydayjourney.tracking.TrackingService;
 
 public class MainActivity extends AppCompatActivity implements PermissionsListener {
@@ -62,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
 
     protected boolean mapLoaded = false;
     protected boolean serviceLoaded = false;
-
-    protected LongSparseArray<HistoryValue[]> loadedValues = new LongSparseArray<>();
+    protected LongSparseArray<HistoryGeoValue[]> loadedValues = new LongSparseArray<>();
 
     private HistoryService historyService;
     protected ServiceConnection historyServiceConnection = new ServiceConnection() {
@@ -78,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         public void onServiceDisconnected(ComponentName componentName) {}
     };
     private LineLayer dataLayer;
+    private Date currentDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     public void onResume() {
         super.onResume();
         mapView.onResume();
+        this.showPathForDay(currentDate);
     }
 
     @Override
@@ -168,16 +165,16 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
 
     protected void showPathForDay(Date date){
         if(this.historyService != null){
-                HistoryValue[] valuesForDay = this.loadHistoricalData(date);
+                HistoryGeoValue[] valuesForDay = this.loadHistoricalData(date,true);
                 this.showPath(valuesForDay);
         }
     }
 
-    protected void showPath(HistoryValue[] values){
+    protected void showPath(HistoryGeoValue[] values){
         if(this.displayedDataSource != null) {
             ArrayList<Point> points = new ArrayList<>();
             LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-            for(HistoryValue val : values){
+            for(HistoryGeoValue val : values){
                 double lat = val.getLocation().getLatitude();
                 double lon = val.getLocation().getLongitude();
                 points.add(Point.fromLngLat(lon,lat));
@@ -219,8 +216,11 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         }
     }
 
-    protected HistoryValue[] loadHistoricalData(Date date){
+    protected HistoryGeoValue[] loadHistoricalData(Date date){
+        return loadHistoricalData(date,false);
+    }
 
+    protected HistoryGeoValue[] loadHistoricalData(Date date,boolean force){
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         cal.set(Calendar.HOUR_OF_DAY,0);
@@ -229,16 +229,10 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         cal.set(Calendar.MILLISECOND,0);
         date = cal.getTime();
 
-        if(this.loadedValues.indexOfKey(date.getTime()) < 0){
-            try {
-                Log.d("DEBUG","Loading for date "+date.toString());
-                this.loadedValues.put(date.getTime(),this.historyService.getValuesForDay(date));
-                this.pathInfoAdapter.notifyDataSetChanged();
-            } catch (IOException e) {
-                Log.e("MainActivity", "Error during data read : " + e.getMessage());
-                e.printStackTrace();
-                return new HistoryValue[0];
-            }
+        if(force || this.loadedValues.indexOfKey(date.getTime()) < 0){
+            Log.d("DEBUG","Loading for date "+date.toString());
+            this.loadedValues.put(date.getTime(),this.historyService.getValuesForDay(date));
+            this.pathInfoAdapter.notifyDataSetChanged();
         }
 
         return this.loadedValues.get(date.getTime());
@@ -264,9 +258,9 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     }
 
     protected void onPageChanged(int position){
-        Date date = this.pathInfoAdapter.getDateForPos(position);
-        this.showPathForDay(date);
-        this.loadMoreData(date);
+        currentDate = this.pathInfoAdapter.getDateForPos(position);
+        this.showPathForDay(currentDate);
+        this.loadMoreData(currentDate);
     }
 
     /////////////////////////
@@ -334,7 +328,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
             PathInfoFragment frag = new PathInfoFragment();
             frag.setDate(date);
 
-            HistoryValue[] values = MainActivity.this.loadHistoricalData(date);
+            HistoryGeoValue[] values = MainActivity.this.loadHistoricalData(date);
             frag.setValues(values);
 
             return frag;

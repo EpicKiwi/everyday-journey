@@ -2,6 +2,8 @@ package fr.epickiwi.everydayjourney.history;
 
 import android.app.Service;
 import android.content.Intent;
+import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteException;
 import android.location.Location;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -16,15 +18,22 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
+
+import fr.epickiwi.everydayjourney.database.TrackingDatabaseHelper;
+import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 
 public class HistoryService extends Service {
 
     File saveDir;
+    TrackingDatabaseHelper dbhlpr;
 
     @Override
     public void onCreate() {
-        this.setupFileSystem();
+        this.dbhlpr = new TrackingDatabaseHelper(getApplicationContext());
     }
 
     @Nullable
@@ -33,66 +42,30 @@ public class HistoryService extends Service {
         return new HistoryBinder(this);
     }
 
-    //////////////////////
-
-    /**
-     * Setup file system for history storage in internal file storage
-     */
-    protected void setupFileSystem(){
-        File root = getFilesDir();
-        this.saveDir = new File(root,"history");
-        this.saveDir.mkdirs();
-        Log.d("HistoryService","Saving history files in "+this.saveDir.getAbsolutePath());
-    }
-
-    protected File getValueFile(long valueDate){
-        Date date = new Date(valueDate);
-        CharSequence formattedDate = DateFormat.format("dd-MM-yyyy",date);
-        return new File(this.saveDir,formattedDate+".csv");
-    }
-
-    protected String valueToFileData(HistoryValue val){
-        Location loc = val.getLocation();
-        return   loc.getTime()+","
-                +loc.getAccuracy()+","
-                +loc.getLatitude()+","
-                +loc.getLongitude()+","
-                +loc.getAltitude()+","
-                +loc.getBearing()+","
-                +loc.getSpeed()+"\n";
-    }
-
     ///////////////////////
 
-    public void appendValue(HistoryValue value) throws IOException {
-        File saveFile = this.getValueFile(value.getLocation().getTime());
-        saveFile.createNewFile();
-        FileWriter outputStream = new FileWriter(saveFile,true);
-        outputStream.write(this.valueToFileData(value));
-        outputStream.close();
+    public void appendValue(HistoryGeoValue value) throws IOException {
+        this.dbhlpr.insertHistoryGeoValues(value);
     }
 
-    public HistoryValue[] getValuesForDay(Date date) throws IOException {
-        File saveFile = this.getValueFile(date.getTime());
+    public HistoryGeoValue[] getValuesForDay(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY,0);
+        cal.set(Calendar.MINUTE,0);
+        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.MILLISECOND,0);
+        Date fromDate = cal.getTime();
+        cal.set(Calendar.HOUR_OF_DAY,22);
+        cal.set(Calendar.MINUTE,59);
+        cal.set(Calendar.SECOND,59);
+        Date toDate = cal.getTime();
+        return this.dbhlpr.getHistoryValues(fromDate.getTime(),toDate.getTime());
+    }
 
-        if(!saveFile.exists()){
-            return new HistoryValue[0];
-        }
-
-        BufferedReader inputStream = null;
-
-        try {
-            inputStream = new BufferedReader(new FileReader(saveFile));
-        } catch (FileNotFoundException e) {
-            return new HistoryValue[0];
-        }
-
-        ArrayList<HistoryValue> values = new ArrayList<>();
-        String line = null;
-        while((line = inputStream.readLine()) != null){
-            values.add(HistoryValue.fromFileData(line));
-        }
-
-        return values.toArray(new HistoryValue[0]);
+    public int getDayCount() {
+        Long[] days = this.dbhlpr.getAvailableDays();
+        long span = days[0] - days[days.length-1];
+        return (int) TimeUnit.DAYS.convert(span,TimeUnit.MILLISECONDS);
     }
 }

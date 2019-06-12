@@ -2,7 +2,6 @@ package fr.epickiwi.everydayjourney.tracking;
 
 import android.Manifest;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,7 +30,7 @@ import fr.epickiwi.everydayjourney.R;
 import fr.epickiwi.everydayjourney.SettingsStorage;
 import fr.epickiwi.everydayjourney.history.HistoryBinder;
 import fr.epickiwi.everydayjourney.history.HistoryService;
-import fr.epickiwi.everydayjourney.history.HistoryValue;
+import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 
 public class TrackingService extends Service {
 
@@ -41,7 +40,7 @@ public class TrackingService extends Service {
     protected LocationCallback locationCallback;
     protected Location currentLocation;
     protected HistoryService historyService;
-    protected ArrayList<HistoryValue> pendingValues = new ArrayList<>();
+    protected ArrayList<HistoryGeoValue> pendingValues = new ArrayList<>();
     private SettingsStorage settings;
 
     @Nullable
@@ -79,7 +78,7 @@ public class TrackingService extends Service {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             TrackingService.this.historyService = ((HistoryBinder) iBinder).getService();
-            for(HistoryValue val : TrackingService.this.pendingValues){
+            for(HistoryGeoValue val : TrackingService.this.pendingValues){
                 TrackingService.this.writeValue(val);
             }
             TrackingService.this.pendingValues = new ArrayList<>();
@@ -146,7 +145,7 @@ public class TrackingService extends Service {
         this.currentLocation = location;
         Log.d("TrackingService", "Location changed : "+location.getLatitude() + ", " + location.getLongitude());
 
-        HistoryValue val = new HistoryValue();
+        HistoryGeoValue val = new HistoryGeoValue();
         val.setLocation(location);
 
         if(historyService == null) {
@@ -156,7 +155,7 @@ public class TrackingService extends Service {
         }
     }
 
-    protected void writeValue(HistoryValue val){
+    protected void writeValue(HistoryGeoValue val){
         try {
             this.historyService.appendValue(val);
         } catch (IOException e) {
