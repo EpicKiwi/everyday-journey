@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         @Override
         public void onServiceDisconnected(ComponentName componentName) {}
     };
+    private LineLayer dataLayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -191,8 +192,9 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
                 } else {
                     this.map.easeCamera(CameraUpdateFactory.newLatLng(values[0].getLatLng()));
                 }
+                this.dataLayer.setProperties(PropertyFactory.visibility(Property.VISIBLE));
             } else {
-                this.displayedDataSource.setGeoJson("");
+                this.dataLayer.setProperties(PropertyFactory.visibility(Property.NONE));
             }
         }
     }
@@ -248,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
         this.displayedDataSource = new GeoJsonSource("displayed-data");
         loadedStyle.addSource(this.displayedDataSource);
 
-        LineLayer dataLayer = new LineLayer("displayed-data","displayed-data");
+        dataLayer = new LineLayer("displayed-data","displayed-data");
         dataLayer.setProperties(
                 PropertyFactory.lineColor(ContextCompat.getColor(this,R.color.colorPrimary)),
                 PropertyFactory.lineWidth(10.0f),
