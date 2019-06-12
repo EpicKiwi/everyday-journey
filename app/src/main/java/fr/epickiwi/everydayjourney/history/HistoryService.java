@@ -60,7 +60,7 @@ public class HistoryService extends Service {
         cal.set(Calendar.MINUTE,59);
         cal.set(Calendar.SECOND,59);
         Date toDate = cal.getTime();
-        return this.dbhlpr.getHistoryValues(fromDate.getTime(),toDate.getTime());
+        return this.dbhlpr.getHistoryValues(fromDate.getTime(),toDate.getTime(),300);
     }
 
     public int getDayCount() {

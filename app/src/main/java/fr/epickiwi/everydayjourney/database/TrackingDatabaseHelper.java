@@ -60,15 +60,24 @@ public class TrackingDatabaseHelper extends SQLiteOpenHelper {
     }
 
     public HistoryGeoValue[] getHistoryValues(long fromDate, long toDate){
+        return getHistoryValues(fromDate, toDate, -1);
+    }
+
+    public HistoryGeoValue[] getHistoryValues(long fromDate, long toDate, float maxAccuracy){
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selection =
                 HistoryGeoValue.HistoryGeoValueModel.TIME_COLUMN+" >= ? AND "+
                 HistoryGeoValue.HistoryGeoValueModel.TIME_COLUMN+" <= ?";
 
+        if(maxAccuracy >= 0){
+            selection += " AND "+ HistoryGeoValue.HistoryGeoValueModel.ACCURACY_COLUMN+" <= ?";
+        }
+
         String[] selectionArgs = {
                 String.valueOf(fromDate),
-                String.valueOf(toDate)
+                String.valueOf(toDate),
+                String.valueOf(maxAccuracy)
         };
 
         String sort = HistoryGeoValue.HistoryGeoValueModel.TIME_COLUMN+" DESC";
