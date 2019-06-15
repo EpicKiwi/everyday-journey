@@ -3,12 +3,13 @@
     package="fr.epickiwi.everydayjourney">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_edjourney"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_edjourney_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity" android:screenOrientation="portrait">
@@ -19,6 +20,8 @@
         </activity>
         <service android:name=".tracking.TrackingService"/>
         <service android:name=".history.HistoryService"/>
+        <service android:name=".placeAnalysis.PlaceAnalysisJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
     </application>
 
 </manifest>

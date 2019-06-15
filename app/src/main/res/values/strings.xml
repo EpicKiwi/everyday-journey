@@ -8,6 +8,17 @@
     <string name="trackingNotificationChannelTitle">État du tracking</string>
     <string name="trackingNotificationChannelDescription">Toutes les notifications décrivant l\'état du tracking</string>
 
+    <string name="overpass_url">http://www.overpass-api.de/api/interpreter</string>
+    <string name="place_overpass_request"><![CDATA[
+        [out:json];
+        (
+            node[~"amenity|leisure|tourism"~".*"]({{around}});
+            way[~"amenity|leisure|tourism"~".*"]({{around}});
+        );
+        (._; >;);
+        out;
+    ]]></string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
