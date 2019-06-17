@@ -9,11 +9,17 @@
     <string name="trackingNotificationChannelDescription">Toutes les notifications décrivant l\'état du tracking</string>
 
     <string name="overpass_url">http://www.overpass-api.de/api/interpreter</string>
+
+
+    <!-- OVERPASS REQUESTS -->
+    <string name="single_place_request_fragment"><![CDATA[
+       node[~"amenity|leisure|tourism"~".*"]({{around}});
+       way[~"amenity|leisure|tourism"~".*"]({{around}});
+    ]]></string>
     <string name="place_overpass_request"><![CDATA[
         [out:json];
         (
-            node[~"amenity|leisure|tourism"~".*"]({{around}});
-            way[~"amenity|leisure|tourism"~".*"]({{around}});
+            {{fragments}}
         );
         (._; >;);
         out;

@@ -83,7 +83,9 @@ public class HistoryGeoValue {
                         " "+ALTITUDE_COLUMN+" DOUBLE,"+
                         " "+BEARING_COLUMN+" FLOAT,"+
                         " "+SPEED_COLUMN+" FLOAT"+
-                        ")"
+                        ")",
+                null,
+                null
         };
     }
 }

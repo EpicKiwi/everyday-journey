@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE weights[
+
+    <!ELEMENT weights (weight*)>
+    <!ELEMENT weight (#PCDATA)>
+
+    <!ATTLIST weight
+        key NMTOKEN #IMPLIED
+        value CDATA #IMPLIED
+        >
+
+    ]>
+<weights>
+    <weight key="access" value="private">3</weight>
+
+    <weight key="leisure" value="swimming_pool">2</weight>
+
+    <weight key="amenity" value="parking">2</weight>
+    <weight key="amenity" value="parking_space">2</weight>
+    <weight key="amenity" value="bicycle_parking">2</weight>
+    <weight key="amenity" value="parking_entrance">2</weight>
+
+    <weight key="amenity" value="waste_basket">5</weight>
+</weights>

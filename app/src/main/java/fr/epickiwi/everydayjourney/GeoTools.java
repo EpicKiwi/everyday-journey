@@ -2,6 +2,8 @@ package fr.epickiwi.everydayjourney;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
+import java.util.ArrayList;
+
 import fr.epickiwi.everydayjourney.database.model.HistoryGeoValue;
 
 public class GeoTools {

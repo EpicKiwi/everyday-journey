@@ -221,6 +221,10 @@ public class MainActivity extends AppCompatActivity implements PermissionsListen
     }
 
     protected HistoryGeoValue[] loadHistoricalData(Date date,boolean force){
+
+        if(date == null)
+            return new HistoryGeoValue[0];
+
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         cal.set(Calendar.HOUR_OF_DAY,0);
