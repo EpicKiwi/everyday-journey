@@ -23,6 +23,7 @@ public class PlaceAnalysisJobService extends JobService {
 
     static float MIN_ACCURACY_VALUES = 500;
     static int MAX_ANALYSIS_DAYS = 180;
+    static long MAX_ANALYSIS_SPAN = 86400000;
     private TrackingDatabaseHelper dbhlpr;
 
     @Override
@@ -76,46 +77,39 @@ public class PlaceAnalysisJobService extends JobService {
         cal.set(Calendar.MINUTE,0);
         cal.set(Calendar.SECOND,0);
         cal.set(Calendar.MILLISECOND,0);
-        Date yesterdayStart = cal.getTime();
-        cal.set(Calendar.HOUR_OF_DAY,23);
-        cal.set(Calendar.MINUTE,59);
-        cal.set(Calendar.SECOND,59);
-        Date yesterdayEnd = cal.getTime();
-        cal.add(Calendar.DAY_OF_MONTH,MAX_ANALYSIS_DAYS);
         Date maxAnalysisDate = cal.getTime();
+        cal.add(Calendar.DAY_OF_MONTH,MAX_ANALYSIS_DAYS);
+        Date minAnalysisDate = cal.getTime();
 
         HistoryGeoValue firstRecord = dbhlpr.firstRecordEver();
-        if(firstRecord.getLocation().getTime() < maxAnalysisDate.getTime()){
-            maxAnalysisDate.setTime(firstRecord.getLocation().getTime());
+        if(firstRecord.getLocation().getTime() < minAnalysisDate.getTime()){
+            minAnalysisDate.setTime(firstRecord.getLocation().getTime());
         }
 
-        AnalyzedSpan[] analyzedSpans = dbhlpr.getAnalyzedSpans(yesterdayStart.getTime(), maxAnalysisDate.getTime());
+        AnalyzedSpan[] analyzedSpans = dbhlpr.getAnalyzedSpans(maxAnalysisDate.getTime(), minAnalysisDate.getTime());
 
-        if(analyzedSpans.length == 0){
-            span.startDate = yesterdayStart;
-            span.endDate = yesterdayEnd;
-            return span;
-        } else if(analyzedSpans[0].getStartDate() > yesterdayStart.getTime()) {
-            span.startDate = yesterdayStart;
-            span.endDate = new Date(analyzedSpans[0].getStartDate());
-            return span;
-        } else {
-            for(int i = 0; i<analyzedSpans.length; i++){
+        for(int i = 0; i<=analyzedSpans.length; i++){
+            if(i == analyzedSpans.length){
 
-                if(i == analyzedSpans.length-1){
-                    if(analyzedSpans[i].getEndDate() < maxAnalysisDate.getTime()){
-                        span.startDate = new Date(analyzedSpans[i].getEndDate());
-                        span.endDate = maxAnalysisDate;
-                        return span;
-                    }
-                    continue;
-                }
+                Date endDate =
+                        analyzedSpans.length > 0 ?
+                                new Date(analyzedSpans[i-1].getStartDate()) :
+                                new Date(maxAnalysisDate.getTime());
 
-                if(!(analyzedSpans[i].getEndDate() >= analyzedSpans[i+1].getStartDate())){
-                    span.startDate = new Date(analyzedSpans[i].getEndDate());
-                    span.startDate = new Date(analyzedSpans[i+1].getStartDate());
+                span.endDate = endDate;
+                span.startDate = new Date(span.endDate.getTime()-MAX_ANALYSIS_SPAN);
+
+                if(span.startDate.getTime() > minAnalysisDate.getTime()){
                     return span;
                 }
+
+            } else if(
+                    i > 0 &&
+                    analyzedSpans[i-1].getStartDate() > analyzedSpans[i].getEndDate()){
+
+                span.endDate = new Date(analyzedSpans[i-1].getStartDate());
+                span.startDate = new Date(Math.max(analyzedSpans[i].getEndDate(),span.endDate.getTime() - MAX_ANALYSIS_SPAN));
+                return span;
 
             }
         }

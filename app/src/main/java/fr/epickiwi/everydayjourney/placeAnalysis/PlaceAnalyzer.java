@@ -37,6 +37,12 @@ public class PlaceAnalyzer {
             centers.add(bbb.build().getCenter());
         }
 
+        if(centers.size() == 0){
+            Log.d("PlaceAnalyzer","No places detected");
+            callback.onSuccess(new PlaceRecord[0]);
+            return;
+        }
+
         String overpassQuery = getOverpassQuery(ctx,centers.toArray(new LatLng[0]),SEARCH_PLACE_AROUND);
 
         Log.d("PlaceAnalyzer",overpassQuery);

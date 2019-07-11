@@ -23,7 +23,7 @@ public class HistoryService extends Service {
     @Override
     public void onCreate() {
         this.dbhlpr = new TrackingDatabaseHelper(getApplicationContext());
-        //PlaceAnalysisJobService.PlaceAnalysisScheduler.schedule(getApplicationContext());
+        PlaceAnalysisJobService.PlaceAnalysisScheduler.schedule(getApplicationContext());
     }
 
     @Nullable

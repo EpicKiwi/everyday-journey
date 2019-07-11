@@ -3,6 +3,7 @@ package fr.epickiwi.everydayjourney.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
@@ -166,7 +167,7 @@ public class TrackingDatabaseHelper extends SQLiteOpenHelper {
                 String.valueOf(startDate)
         };
 
-        String sort = AnalyzedSpan.AnalyzedSpanModel.START_DATE_COLUMN+" ASC";
+        String sort = AnalyzedSpan.AnalyzedSpanModel.END_DATE_COLUMN+" DESC";
 
         Cursor cursor = db.query(AnalyzedSpan.AnalyzedSpanModel.TABLE_NAME, null, selection, selectionArgs, null, null, sort);
 
@@ -219,7 +220,9 @@ public class TrackingDatabaseHelper extends SQLiteOpenHelper {
 
         try {
             db.insert(Place.PlaceModel.TABLE_NAME, null, vals);
-        } catch(Exception e){}
+        } catch(SQLiteConstraintException e){
+            Log.w("TrackingDatabaseHelper","Can't add place "+e.getMessage());
+        }
     }
 
     static String valueOrNull(Object value){
