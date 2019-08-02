@@ -19,7 +19,7 @@ import fr.epickiwi.everydayjourney.database.model.PlaceRecord;
 
 public class PlaceAnalysisJobService extends JobService {
 
-    static boolean IS_DEBUGGING = true;
+    static boolean IS_DEBUGGING = false;
 
     static float MIN_ACCURACY_VALUES = 500;
     static int MAX_ANALYSIS_DAYS = 180;

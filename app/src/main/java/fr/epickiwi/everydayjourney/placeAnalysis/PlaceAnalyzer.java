@@ -114,7 +114,11 @@ public class PlaceAnalyzer {
 
         for(Way way : overpassResult.getWays()) {
 
-            LatLng center = way.getBounds().getCenter();
+            if(way.getNodes().length == 0){
+                continue;
+            }
+
+            LatLng center = way.getNodes().length > 1 ? way.getBounds().getCenter() : way.getNodes()[0].getLocation();
             double distance = GeoTools.getDistance(point,center);
 
             if(distance > SEARCH_PLACE_AROUND){
